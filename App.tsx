@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Analytics } from "@vercel/analytics/react"
 import { Header } from './components/Header';
 import { ChatInput } from './components/ChatInput';
 import { MessageBubble } from './components/MessageBubble';
@@ -53,13 +54,13 @@ const App: React.FC = () => {
       setChats(loadedChats);
       setActiveChatId(loadedChats[0].id);
     }
-    
+
     // Initial usage count
     setDailyMessageCount(getMessageUsageCount());
 
     // Update usage count periodically (e.g. to reflect expired timestamps)
     const interval = setInterval(() => {
-        setDailyMessageCount(getMessageUsageCount());
+      setDailyMessageCount(getMessageUsageCount());
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
@@ -115,7 +116,7 @@ const App: React.FC = () => {
     if (view === 'chat' && currentMessages.length > 0) {
       const lastMessage = currentMessages[currentMessages.length - 1];
       if (lastMessage.role === 'user') {
-         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }
     }
   }, [currentMessages, view]);
@@ -123,10 +124,10 @@ const App: React.FC = () => {
   // 2. Instant scroll to bottom ONLY when switching chats or entering the view
   useEffect(() => {
     if (view === 'chat') {
-       // Small timeout to ensure layout is ready
-       setTimeout(() => {
-         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-       }, 50);
+      // Small timeout to ensure layout is ready
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      }, 50);
     }
   }, [activeChatId, view]);
 
@@ -137,21 +138,21 @@ const App: React.FC = () => {
     const now = Date.now();
     const stored = localStorage.getItem('salaf_ai_msg_timestamps');
     const timestamps: number[] = stored ? JSON.parse(stored) : [];
-    
+
     // Filter timestamps older than 24h
     const recent = timestamps.filter(t => now - t < MS_IN_24H);
-    
+
     // Update storage if needed
     if (recent.length !== timestamps.length) {
-        localStorage.setItem('salaf_ai_msg_timestamps', JSON.stringify(recent));
+      localStorage.setItem('salaf_ai_msg_timestamps', JSON.stringify(recent));
     }
-    
+
     if (recent.length >= MAX_MESSAGES_24H) {
-        const oldest = Math.min(...recent);
-        const resetTime = oldest + MS_IN_24H;
-        return { allowed: false, timeRemaining: resetTime - now };
+      const oldest = Math.min(...recent);
+      const resetTime = oldest + MS_IN_24H;
+      return { allowed: false, timeRemaining: resetTime - now };
     }
-    
+
     return { allowed: true };
   };
 
@@ -159,10 +160,10 @@ const App: React.FC = () => {
     const now = Date.now();
     const stored = localStorage.getItem('salaf_ai_msg_timestamps');
     let timestamps: number[] = stored ? JSON.parse(stored) : [];
-    
+
     // Filter first to ensure clean state
     timestamps = timestamps.filter(t => now - t < MS_IN_24H);
-    
+
     timestamps.push(now);
     localStorage.setItem('salaf_ai_msg_timestamps', JSON.stringify(timestamps));
   };
@@ -206,27 +207,27 @@ const App: React.FC = () => {
     // Check Rate Limit
     const rateLimit = checkRateLimit();
     if (!rateLimit.allowed) {
-        // Update display count to ensure it reflects max
-        setDailyMessageCount(getMessageUsageCount());
-        
-        const remainingMs = rateLimit.timeRemaining || 0;
-        const hours = Math.floor(remainingMs / (1000 * 60 * 60));
-        const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-        
-        const limitMessage: Message = {
-            id: Date.now().toString(),
-            role: 'model',
-            text: `عذراً، لقد استهلكت الحد اليومي من الرسائل (20 رسالة / 24 ساعة).\n\nيرجى الانتظار ${hours > 0 ? hours + ' ساعة و ' : ''}${minutes} دقيقة قبل إرسال رسالة جديدة.`,
-            timestamp: new Date(),
-            isError: true
-        };
+      // Update display count to ensure it reflects max
+      setDailyMessageCount(getMessageUsageCount());
 
-        setChats(prevChats => prevChats.map(chat => 
-            chat.id === activeChatId 
-                ? { ...chat, messages: [...chat.messages, limitMessage] }
-                : chat
-        ));
-        return;
+      const remainingMs = rateLimit.timeRemaining || 0;
+      const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+      const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      const limitMessage: Message = {
+        id: Date.now().toString(),
+        role: 'model',
+        text: `عذراً، لقد استهلكت الحد اليومي من الرسائل (20 رسالة / 24 ساعة).\n\nيرجى الانتظار ${hours > 0 ? hours + ' ساعة و ' : ''}${minutes} دقيقة قبل إرسال رسالة جديدة.`,
+        timestamp: new Date(),
+        isError: true
+      };
+
+      setChats(prevChats => prevChats.map(chat =>
+        chat.id === activeChatId
+          ? { ...chat, messages: [...chat.messages, limitMessage] }
+          : chat
+      ));
+      return;
     }
 
     // Prepare User Message
@@ -242,13 +243,13 @@ const App: React.FC = () => {
       if (chat.id === activeChatId) {
         const isFirstMessage = chat.messages.length === 0;
         let newTitle = chat.title;
-        
+
         if (isFirstMessage) {
-            if (text.trim().length > 0) {
-                newTitle = text.length > 30 ? text.substring(0, 30) + '...' : text;
-            } else if (attachment) {
-                newTitle = `ملف: ${attachment.name}`;
-            }
+          if (text.trim().length > 0) {
+            newTitle = text.length > 30 ? text.substring(0, 30) + '...' : text;
+          } else if (attachment) {
+            newTitle = `ملف: ${attachment.name}`;
+          }
         }
 
         return {
@@ -262,11 +263,11 @@ const App: React.FC = () => {
 
     setChats(updatedChatsAfterUser);
     saveChatsToLocalStorage(updatedChatsAfterUser);
-    
+
     // Record usage immediately
     recordMessageUsage();
     setDailyMessageCount(getMessageUsageCount());
-    
+
     setIsLoading(true);
 
     const currentChatHistory = updatedChatsAfterUser.find(c => c.id === activeChatId)?.messages || [];
@@ -275,23 +276,23 @@ const App: React.FC = () => {
       const minDelayPromise = new Promise<void>((resolve) => setTimeout(resolve, 1500));
       const apiPromise = sendMessageToGemini(currentChatHistory, text, attachment);
       const [responseText] = await Promise.all([apiPromise, minDelayPromise]);
-      
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'model',
         text: responseText,
         timestamp: new Date(),
       };
-      
+
       setChats(prevChats => {
         const finalChats = prevChats.map(chat => {
-            if (chat.id === activeChatId) {
-                return {
-                    ...chat,
-                    messages: [...chat.messages, botMessage]
-                };
-            }
-            return chat;
+          if (chat.id === activeChatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, botMessage]
+            };
+          }
+          return chat;
         });
         saveChatsToLocalStorage(finalChats);
         return finalChats;
@@ -306,19 +307,19 @@ const App: React.FC = () => {
         timestamp: new Date(),
         isError: true,
       };
-      
+
       setChats(prevChats => {
-         const errorChats = prevChats.map(chat => {
-             if (chat.id === activeChatId) {
-                 return {
-                     ...chat,
-                     messages: [...chat.messages, errorMessage]
-                 };
-             }
-             return chat;
-         });
-         saveChatsToLocalStorage(errorChats);
-         return errorChats;
+        const errorChats = prevChats.map(chat => {
+          if (chat.id === activeChatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, errorMessage]
+            };
+          }
+          return chat;
+        });
+        saveChatsToLocalStorage(errorChats);
+        return errorChats;
       });
 
     } finally {
@@ -328,7 +329,7 @@ const App: React.FC = () => {
 
   const handleSelectChat = (chatId: string) => {
     setActiveChatId(chatId);
-    setIsSidebarOpen(false); 
+    setIsSidebarOpen(false);
     setView('chat');
   };
 
@@ -364,14 +365,15 @@ const App: React.FC = () => {
 
   return (
     <>
+      <Analytics />
       <InstallPrompt onInstall={handleInstallClick} />
       {view === 'landing' ? (
         <LandingPage onStartChat={enterApp} onInstallClick={handleInstallClick} />
       ) : (
         <div className="flex h-screen bg-transparent overflow-hidden">
-          <Sidebar 
-            isOpen={isSidebarOpen} 
-            onClose={() => setIsSidebarOpen(false)} 
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
             onNewChat={() => createNewChat(false)}
             chats={chats}
             activeChatId={activeChatId}
@@ -382,71 +384,71 @@ const App: React.FC = () => {
           />
 
           <div className="flex-1 flex flex-col h-full relative w-full transition-all duration-300">
-            <Header 
+            <Header
               onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
               onHomeClick={() => setView('landing')}
             />
-            
-            <main className="flex-1 overflow-y-auto p-4 custom-scrollbar relative">
-                <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
-                    {currentMessages.length === 0 ? (
-                      <div className="flex-1 flex flex-col items-center justify-end select-none px-4 animate-in fade-in duration-500 pb-2">
-                          <img 
-                            src="https://i.postimg.cc/RhRmHpj2/1000000424.png" 
-                            alt="Salaf AI" 
-                            width="240"
-                            height="240"
-                            className="w-48 md:w-60 h-auto mb-6 drop-shadow-[0_0_20px_rgba(212,175,55,0.2)] mt-auto"
-                          />
-                          <h1 className="text-3xl md:text-4xl text-[#D4AF37] font-bold mb-3 text-center">Salaf AI - باحث السلف</h1>
-                          <h2 className="text-lg md:text-xl text-[#E0E0E0] font-medium mb-4 text-center">دليلك الموثوق للمعرفة الإسلامية الأصيلة</h2>
-                          <p className="text-gray-300 text-center max-w-2xl leading-relaxed font-light mb-8 text-sm md:text-base">
-                            Salaf AI هو ذكاء اصطناعي مصمم للإجابة على أسئلتك في الفقه والعقيدة والسيرة وفق منهج السلف الصالح، مستمداً من القرآن والسنة الصحيحة.
-                          </p>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
-                              {["ما هو منهج السلف؟", "شرح معنى التوحيد", "حكم تارك الصلاة"].map((q) => (
-                                  <button
-                                      key={q}
-                                      onClick={() => setInputText(q)}
-                                      className="px-4 py-3 bg-[#1E1E1E]/60 border border-[#333] hover:border-[#D4AF37]/50 rounded-xl text-[#E0E0E0] text-sm transition-all duration-300 hover:bg-[#D4AF37]/10 hover:shadow-lg hover:shadow-[#D4AF37]/5 active:scale-95"
-                                  >
-                                      {q}
-                                  </button>
-                              ))}
-                          </div>
-                      </div>
-                    ) : (
-                      <div className="pb-8">
-                      {currentMessages.map((msg) => (
-                          <MessageBubble key={msg.id} message={msg} />
+            <main className="flex-1 overflow-y-auto p-4 custom-scrollbar relative">
+              <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
+                {currentMessages.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-end select-none px-4 animate-in fade-in duration-500 pb-2">
+                    <img
+                      src="https://i.postimg.cc/RhRmHpj2/1000000424.png"
+                      alt="Salaf AI"
+                      width="240"
+                      height="240"
+                      className="w-48 md:w-60 h-auto mb-6 drop-shadow-[0_0_20px_rgba(212,175,55,0.2)] mt-auto"
+                    />
+                    <h1 className="text-3xl md:text-4xl text-[#D4AF37] font-bold mb-3 text-center">Salaf AI - باحث السلف</h1>
+                    <h2 className="text-lg md:text-xl text-[#E0E0E0] font-medium mb-4 text-center">دليلك الموثوق للمعرفة الإسلامية الأصيلة</h2>
+                    <p className="text-gray-300 text-center max-w-2xl leading-relaxed font-light mb-8 text-sm md:text-base">
+                      Salaf AI هو ذكاء اصطناعي مصمم للإجابة على أسئلتك في الفقه والعقيدة والسيرة وفق منهج السلف الصالح، مستمداً من القرآن والسنة الصحيحة.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
+                      {["ما هو منهج السلف؟", "شرح معنى التوحيد", "حكم تارك الصلاة"].map((q) => (
+                        <button
+                          key={q}
+                          onClick={() => setInputText(q)}
+                          className="px-4 py-3 bg-[#1E1E1E]/60 border border-[#333] hover:border-[#D4AF37]/50 rounded-xl text-[#E0E0E0] text-sm transition-all duration-300 hover:bg-[#D4AF37]/10 hover:shadow-lg hover:shadow-[#D4AF37]/5 active:scale-95"
+                        >
+                          {q}
+                        </button>
                       ))}
-                      </div>
-                    )}
-                    
-                    {isLoading && (
-                        <div className="flex w-full mb-6 justify-end">
-                          <div className="bg-[#1E1E1E]/80 backdrop-blur border border-[#D4AF37]/30 rounded-2xl rounded-bl-none px-8 py-3 shadow-[0_0_20px_rgba(212,175,55,0.1)] animate-in fade-in slide-in-from-right-4">
-                              <div className="flex items-center gap-3 h-6">
-                                  <span className="text-[#D4AF37] font-bold text-sm tracking-wide transition-all duration-500 animate-pulse">
-                                      {DHIKR_PHRASES[dhikrIndex]}
-                                  </span>
-                                  <div className="flex space-x-1 space-x-reverse items-center">
-                                      <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                      <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                      <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce"></div>
-                                  </div>
-                              </div>
-                          </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pb-8">
+                    {currentMessages.map((msg) => (
+                      <MessageBubble key={msg.id} message={msg} />
+                    ))}
+                  </div>
+                )}
+
+                {isLoading && (
+                  <div className="flex w-full mb-6 justify-end">
+                    <div className="bg-[#1E1E1E]/80 backdrop-blur border border-[#D4AF37]/30 rounded-2xl rounded-bl-none px-8 py-3 shadow-[0_0_20px_rgba(212,175,55,0.1)] animate-in fade-in slide-in-from-right-4">
+                      <div className="flex items-center gap-3 h-6">
+                        <span className="text-[#D4AF37] font-bold text-sm tracking-wide transition-all duration-500 animate-pulse">
+                          {DHIKR_PHRASES[dhikrIndex]}
+                        </span>
+                        <div className="flex space-x-1 space-x-reverse items-center">
+                          <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                          <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                          <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-bounce"></div>
                         </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </main>
 
-            <ChatInput 
-              onSend={handleSendMessage} 
-              isLoading={isLoading} 
+            <ChatInput
+              onSend={handleSendMessage}
+              isLoading={isLoading}
               input={inputText}
               setInput={setInputText}
             />

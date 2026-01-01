@@ -1,0 +1,178 @@
+import React, { useRef, useState, useLayoutEffect } from 'react';
+import { Attachment } from '../types';
+
+interface ChatInputProps {
+  onSend: (text: string, attachment?: Attachment) => void;
+  isLoading: boolean;
+  input: string;
+  setInput: (text: string) => void;
+}
+
+export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, setInput }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [attachment, setAttachment] = useState<Attachment | undefined>(undefined);
+  
+  // Use state for height to ensure correct initial render
+  const [height, setHeight] = useState('40px');
+
+  // useLayoutEffect prevents visual flickering when resizing
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    if (!input) {
+      setHeight('40px');
+      textarea.style.height = '40px'; // Force immediate update
+      return;
+    }
+
+    // Reset height to allow measurement
+    textarea.style.height = '40px';
+    
+    const scrollHeight = textarea.scrollHeight;
+    
+    // Only grow if content exceeds the base line height significantly
+    if (scrollHeight > 45) {
+      setHeight(`${Math.min(scrollHeight, 150)}px`);
+    } else {
+      setHeight('40px');
+    }
+  }, [input]);
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if ((!input.trim() && !attachment) || isLoading) return;
+    
+    onSend(input, attachment);
+    setInput('');
+    setAttachment(undefined);
+    setHeight('40px');
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAttachment({
+          name: file.name,
+          mimeType: file.type,
+          data: reader.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeAttachment = () => {
+    setAttachment(undefined);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  return (
+    <div className="w-full bg-transparent px-4 pb-6 pt-2 md:px-6 md:pb-8 shrink-0 z-20">
+      <div className="max-w-3xl mx-auto flex flex-col gap-2">
+        
+        {/* Attachment Preview */}
+        {attachment && (
+          <div className="flex items-center gap-3 bg-[#1E1E1E] border border-[#333] rounded-xl p-2 pl-4 w-fit animate-in fade-in slide-in-from-bottom-2 shadow-lg mx-1 mb-1">
+            <div className="relative w-10 h-10 bg-black/30 rounded-lg overflow-hidden flex items-center justify-center border border-[#333]">
+              {attachment.mimeType.startsWith('image/') ? (
+                <img src={attachment.data} alt="preview" className="w-full h-full object-cover" />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              )}
+            </div>
+            <div className="flex flex-col max-w-[120px]">
+              <span className="text-xs text-[#E0E0E0] truncate font-medium">{attachment.name}</span>
+              <span className="text-[10px] text-gray-500 uppercase">{attachment.mimeType.split('/')[1]}</span>
+            </div>
+            <button 
+              onClick={removeAttachment}
+              className="p-1 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-lg transition-colors ml-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+        )}
+
+        {/* Input Container */}
+        <div className="relative flex items-end gap-2 bg-[#1E1E1E] border border-[#333] shadow-lg rounded-[24px] p-1.5 transition-all duration-300 focus-within:border-[#D4AF37]/50 focus-within:shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+          
+          {/* File Upload Button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 text-gray-400 hover:text-[#D4AF37] hover:bg-[#333] shrink-0
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+            `}
+            title="إرفاق ملف"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+          </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileSelect} 
+            className="hidden" 
+            accept="image/*,application/pdf"
+          />
+
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={attachment ? "أضف تعليقاً..." : "اسأل هنا وفق منهج السلف..."}
+            // Removed fontFamily inline style to use the app default
+            className="w-full bg-transparent text-[#E0E0E0] px-2 py-2 h-[40px] resize-none focus:outline-none placeholder-gray-500 text-base leading-6 overflow-hidden [&::-webkit-scrollbar]:hidden"
+            style={{ 
+              height: height, 
+              minHeight: '40px',
+              maxHeight: '150px'
+            }}
+            rows={1}
+            disabled={isLoading}
+          />
+          
+          {/* Send Button */}
+          <button
+            onClick={() => handleSubmit()}
+            disabled={(!input.trim() && !attachment) || isLoading}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shrink-0
+              ${
+                (!input.trim() && !attachment) || isLoading
+                  ? 'bg-[#333] cursor-not-allowed text-gray-500'
+                  : 'bg-[#D4AF37] hover:bg-[#C5A028] text-[#121212] shadow-lg shadow-[#D4AF37]/20'
+              }
+            `}
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-[#121212] border-t-transparent rounded-full animate-spin" />
+            ) : (
+              // Arrow Up icon
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5"></line>
+                <polyline points="5 12 12 5 19 12"></polyline>
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

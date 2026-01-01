@@ -1,0 +1,336 @@
+import React, { useMemo, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Message } from '../types';
+
+interface MessageBubbleProps {
+  message: Message;
+}
+
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+  const isUser = message.role === 'user';
+  const [isCopied, setIsCopied] = useState(false);
+  const [showSources, setShowSources] = useState(false);
+
+  // Helper to convert English numerals to Arabic numerals
+  const toArabicNumerals = (str: string) => {
+    return str.replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[parseInt(d)]);
+  };
+
+  // Extract Sources and Clean Text
+  const { displayContent, sourcesList } = useMemo(() => {
+    const rawText = message.text || "";
+    // Regex to match the block between [[SOURCES_START]] and [[SOURCES_END]]
+    const sourceRegex = /\[\[SOURCES_START\]\]([\s\S]*?)\[\[SOURCES_END\]\]/;
+    const match = rawText.match(sourceRegex);
+
+    if (match) {
+      const sourcesContent = match[1].trim();
+      const sources = sourcesContent
+        .split('\n')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+      
+      return {
+        displayContent: rawText.replace(sourceRegex, '').trim(),
+        sourcesList: sources
+      };
+    }
+
+    return { displayContent: rawText, sourcesList: [] };
+  }, [message.text]);
+
+  const handleCopy = () => {
+    // Clean the text from custom HTML tags injected by the prompt before copying
+    // Use displayContent to ensure we don't copy the hidden source block
+    const cleanText = displayContent
+      .replace(/<p class="quran">/g, '')
+      .replace(/<p class="hadith">/g, '')
+      .replace(/<span class="source">/g, '') 
+      .replace(/<\/p>/g, '')
+      .replace(/<\/span>/g, '')
+      .replace(/<br\s*\/?>/gi, '\n');
+
+    navigator.clipboard.writeText(cleanText).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    });
+  };
+
+  // Recursive function to traverse React nodes and convert text
+  const processContent = (node: React.ReactNode): React.ReactNode => {
+    if (isUser) return node; // Don't convert user messages
+
+    if (typeof node === 'string') {
+      return toArabicNumerals(node);
+    }
+    if (Array.isArray(node)) {
+      return node.map((n, i) => <React.Fragment key={i}>{processContent(n)}</React.Fragment>);
+    }
+    if (React.isValidElement(node)) {
+      const props = (node.props as any);
+      if (props.children) {
+        return React.cloneElement(node, {
+          ...props,
+          children: processContent(props.children)
+        });
+      }
+      return node;
+    }
+    return node;
+  };
+
+  // Pre-process text to convert HTML tags to Markdown code blocks we can intercept
+  const processedText = useMemo(() => {
+    if (isUser) return displayContent;
+    
+    return displayContent
+      // Convert Quran tags to a specific code block language
+      .replace(/<p class="quran">([\s\S]*?)<\/p>/g, '\n```quran\n$1\n```\n')
+      // Convert Hadith tags to a specific code block language
+      .replace(/<p class="hadith">([\s\S]*?)<\/p>/g, (match, content) => {
+         return `\n\`\`\`hadith\n${content}\n\`\`\`\n`;
+      });
+  }, [displayContent, isUser]);
+
+  // Custom styling for markdown elements to match the theme
+  const components = {
+    p: ({children}: any) => <p className="mb-4 last:mb-0 leading-[1.8] whitespace-pre-wrap break-words">{processContent(children)}</p>,
+    h1: ({children}: any) => <h1 className={`text-2xl font-bold mb-4 mt-6 ${isUser ? 'text-black' : 'text-[#D4AF37]'}`}>{processContent(children)}</h1>,
+    h2: ({children}: any) => <h2 className={`text-xl font-bold mb-3 mt-5 ${isUser ? 'text-black' : 'text-[#D4AF37]'}`}>{processContent(children)}</h2>,
+    h3: ({children}: any) => <h3 className={`text-lg font-bold mb-2 mt-4 ${isUser ? 'text-black' : 'text-[#D4AF37]'}`}>{processContent(children)}</h3>,
+    strong: ({children}: any) => <strong className={`font-bold ${isUser ? 'text-black' : 'text-[#D4AF37]'}`}>{processContent(children)}</strong>,
+    em: ({children}: any) => <em className="italic">{processContent(children)}</em>,
+    ul: ({children}: any) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
+    ol: ({children}: any) => <ol className="list-decimal list-inside mb-4 space-y-2">{children}</ol>,
+    li: ({children}: any) => <li className="leading-relaxed marker:text-current">{processContent(children)}</li>,
+    blockquote: ({children}: any) => (
+      <blockquote className={`border-r-4 pr-4 py-2 my-4 italic rounded-l-lg ${
+        isUser 
+          ? 'border-black/30 bg-black/5' 
+          : 'border-[#D4AF37] bg-[#1E1E1E] text-gray-300'
+      }`}>
+        {processContent(children)}
+      </blockquote>
+    ),
+    a: ({href, children}: any) => (
+      <a 
+        href={href} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className={`underline decoration-1 underline-offset-2 transition-colors ${
+          isUser ? 'text-black hover:text-black/70' : 'text-[#D4AF37] hover:text-[#F7D560]'
+        }`}
+      >
+        {processContent(children)}
+      </a>
+    ),
+    code: ({node, inline, className, children, ...props}: any) => {
+      const match = /language-(\w+)/.exec(className || '');
+      const lang = match ? match[1] : '';
+
+      // Custom Renderers for our hijacked blocks
+      if (!inline && lang === 'quran') {
+        return (
+            <div className="quran whitespace-pre-wrap break-words max-w-full">
+                {toArabicNumerals(String(children).replace(/\n$/, ''))}
+            </div>
+        );
+      }
+
+      if (!inline && lang === 'hadith') {
+        const content = String(children).replace(/\n$/, '');
+        // Check for source span pattern
+        const sourceMatch = content.match(/<span class="source">(.*?)<\/span>/);
+        let mainText = content;
+        let sourceText = '';
+        
+        if (sourceMatch) {
+             mainText = content.replace(sourceMatch[0], '').replace(/<br\s*\/?>/gi, '');
+             sourceText = sourceMatch[1];
+        }
+
+        return (
+            <div className="hadith whitespace-pre-wrap break-words max-w-full">
+                <p>{toArabicNumerals(mainText)}</p>
+                {sourceText && <span className="source">{toArabicNumerals(sourceText)}</span>}
+            </div>
+        );
+      }
+
+      if (inline) {
+        return <code className={`px-1.5 py-0.5 rounded font-mono text-xs mx-1 ${
+          isUser ? 'bg-black/10 text-black' : 'bg-[#2c2c2c] text-[#D4AF37] border border-[#333]'
+        }`}>{processContent(children)}</code>;
+      }
+      
+      return (
+        <div className="my-4 overflow-x-auto rounded-lg border border-[#333] max-w-full">
+           <pre className={`p-4 font-mono text-xs whitespace-pre-wrap break-words ${
+             isUser ? 'bg-black/5 text-black' : 'bg-[#1E1E1E] text-gray-300'
+           }`}>
+             {processContent(children)}
+           </pre>
+        </div>
+      );
+    },
+    // Table Elements
+    table: ({children}: any) => (
+      <div className="overflow-x-auto my-4 rounded-lg border border-[#D4AF37]/30 max-w-full">
+        <table className={`min-w-full border-collapse table-fixed text-right ${isUser ? 'text-black' : 'text-[#E0E0E0]'}`}>
+          {children}
+        </table>
+      </div>
+    ),
+    thead: ({children}: any) => (
+      <thead className={isUser ? 'bg-black/10' : 'bg-[#1E1E1E] border-b border-[#D4AF37]/30'}>
+        {children}
+      </thead>
+    ),
+    tbody: ({children}: any) => (
+      <tbody className={`divide-y ${isUser ? 'divide-black/10' : 'divide-[#333]'}`}>
+        {children}
+      </tbody>
+    ),
+    tr: ({children}: any) => (
+      <tr className={`transition-colors ${isUser ? 'hover:bg-black/5' : 'hover:bg-[#1E1E1E]'}`}>
+        {children}
+      </tr>
+    ),
+    th: ({children}: any) => (
+      <th className={`px-4 py-3 font-bold text-sm align-top ${
+        isUser ? 'text-black border-black/20' : 'text-[#D4AF37] border-[#D4AF37]/30'
+      }`}>
+        {processContent(children)}
+      </th>
+    ),
+    td: ({children}: any) => (
+      <td className={`px-4 py-3 text-sm border-l align-top break-words ${
+        isUser ? 'border-black/10' : 'border-[#D4AF37]/10'
+      }`}>
+        {processContent(children)}
+      </td>
+    ),
+  };
+
+  return (
+    <>
+      <article className={`flex w-full mb-8 ${isUser ? 'justify-start' : ''}`} aria-label={isUser ? "User message" : "Salaf AI response"}>
+        <div
+          className={`relative text-base overflow-hidden transition-all duration-300 group
+          ${
+            isUser
+              ? 'max-w-[85%] md:max-w-[75%] rounded-2xl px-6 py-4 shadow-[0_4px_15px_rgba(212,175,55,0.15)] bg-gradient-to-br from-[#D4AF37] to-[#C5A028] text-[#000000] rounded-br-none font-bold'
+              : 'w-full text-[#E0E0E0] font-light leading-[1.8] border border-[#333]/50 shadow-sm rounded-xl p-4 bg-[#121212]/30 backdrop-blur-sm'
+          }
+          ${message.isError ? 'border-red-500 border bg-red-900/20 text-red-200 rounded-lg px-6 py-4' : ''}
+          `}
+        >
+          {/* Attachment Display */}
+          {message.attachment && (
+              <div className="mb-4 rounded-lg overflow-hidden bg-black/10 border border-black/10">
+                  {message.attachment.mimeType.startsWith('image/') ? (
+                      <img src={message.attachment.data} alt="uploaded" className="max-w-full h-auto max-h-[300px] object-contain" />
+                  ) : (
+                      <div className="flex items-center gap-3 p-3">
+                          <div className="p-2 bg-black/20 rounded-lg">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                          </div>
+                          <div className="flex flex-col">
+                              <span className="text-sm font-bold truncate max-w-[200px]">{message.attachment.name}</span>
+                              <span className="text-xs opacity-70 uppercase">{message.attachment.mimeType.split('/')[1]}</span>
+                          </div>
+                      </div>
+                  )}
+              </div>
+          )}
+
+          {message.text && (
+            <div className="markdown-content w-full max-w-full">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+                {processedText}
+              </ReactMarkdown>
+            </div>
+          )}
+          
+          <div className="flex items-center justify-end mt-2 gap-3">
+            <div className={`text-[10px] opacity-70 ${isUser ? 'text-[#000000]' : 'text-[#D4AF37]'}`}>
+              {toArabicNumerals(message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}
+            </div>
+
+            {!isUser && !message.isError && (
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                {/* Sources Button */}
+                {sourcesList.length > 0 && (
+                  <button
+                    onClick={() => setShowSources(true)}
+                    className="flex items-center gap-1 px-2 py-1 rounded bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 transition-colors text-xs"
+                    title="عرض المصادر"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    <span>المصادر</span>
+                  </button>
+                )}
+
+                {/* Copy Button */}
+                <button
+                  onClick={handleCopy}
+                  className="p-1.5 rounded-full hover:bg-[#ffffff]/10 text-[#D4AF37]"
+                  title="نسخ النص"
+                  aria-label="Copy text"
+                >
+                  {isCopied ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2 2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </article>
+
+      {/* Sources Modal */}
+      {showSources && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div 
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowSources(false)}
+          />
+          <div className="relative w-full max-w-lg bg-[#1E1E1E] border border-[#D4AF37]/30 rounded-2xl shadow-2xl p-6 md:p-8 transform transition-all animate-in zoom-in-95">
+            <button
+              onClick={() => setShowSources(false)}
+              className="absolute top-4 left-4 text-gray-400 hover:text-[#D4AF37] transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            
+            <h3 className="text-xl font-bold text-[#D4AF37] mb-6 flex items-center gap-2 pb-4 border-b border-[#333]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+              المصادر والمراجع
+            </h3>
+            
+            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar pl-2">
+              <ul className="space-y-4">
+                {sourcesList.map((source, index) => (
+                  <li key={index} className="flex gap-3 text-[#E0E0E0] text-sm leading-relaxed bg-[#121212]/50 p-3 rounded-lg border border-[#333]">
+                    <span className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] text-xs font-bold font-mono border border-[#D4AF37]/30">
+                      {toArabicNumerals((index + 1).toString())}
+                    </span>
+                    <span>{toArabicNumerals(source.replace(/^\d+\.\s*/, ''))}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};

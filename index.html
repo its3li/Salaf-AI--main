@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+<meta name="google-site-verification" content="ym7wMz--qx9JBmkk7d-htGrd30d8y1N0SL_Whh7IPZo" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Salaf AI | باحث السلف - Authentic Islamic Research AI</title>
+    <meta name="description" content="Salaf AI provides accurate Islamic knowledge based on the Quran, Sunnah, and the understanding of the Salaf al-Salih. Ask questions about Fiqh, Aqidah, and History.">
+    <meta name="keywords" content="Islamic AI, Salaf AI, Quran, Sunnah, Salafi, Fiqh, Fatwa, Islam Chatbot, باحث السلف, الذكاء الاصطناعي الإسلامي">
+    
+    <!-- Favicon and PWA Setup -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#D4AF37">
+
+    <!-- Social Media Meta Tags -->
+    <meta property="og:title" content="Salaf AI | باحث السلف - Authentic Islamic Knowledge">
+    <meta property="og:description" content="Ask complex Islamic questions and get answers based strictly on the Quran, Sunnah, and the Salafi methodology. Accurate, sourced, and reliable.">
+    <meta property="og:image" content="https://i.ibb.co/Jj6rH7cT/Make-the-background-2k-202512312336-2.jpg">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Salaf AI",
+      "alternateName": ["باحث السلف", "SalafAI"],
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "An advanced AI research tool for Islamic knowledge based on the Quran, Sunnah, and the methodology of the Salaf al-Salih."
+    }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Updated Cairo font range as requested, kept Amiri Quran for specific Quran styling -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Cairo:wght@200..1000&display=swap" rel="stylesheet">
+    
+    <style>
+      body {
+        font-family: 'Cairo', sans-serif;
+        /* Royal Radial Gradient */
+        background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+        background-attachment: fixed;
+        color: #E0E0E0;
+        min-height: 100vh;
+      }
+      /* Custom Scrollbar for Chrome/Safari/Webkit */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #444; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #D4AF37; 
+      }
+
+      /* --- تنسيقات النصوص الدينية --- */
+
+      .quran {
+          /* تطبيق خط الرسم العثماني (Amiri Quran) */
+          font-family: 'Amiri Quran', serif;
+          font-size: 1.25rem; /* حجم خط أكبر */
+          line-height: 2.1rem;
+          color: #D4AF37; /* اللون الذهبي المميز */
+          
+          /* الشريط الذهبي العمودي على اليمين */
+          border-right: 4px solid rgba(212, 175, 55, 0.4); 
+          padding-right: 1rem;
+          
+          margin-top: 1rem;
+          margin-bottom: 1rem;
+          font-style: normal;
+      }
+
+      .hadith {
+          /* لون فضي خفيف لتمييز الحديث عن النص */
+          color: #BDBDBD; 
+          font-style: italic; /* خط مائل */
+          margin-top: 1rem;
+          margin-bottom: 1rem;
+          padding-right: 0.5rem;
+      }
+
+      .hadith .source {
+          /* تنسيق مصدر الحديث (مثل رواه البخاري) */
+          font-size: 0.9em;
+          font-style: normal;
+          color: #9CA3AF;
+          display: block;
+          margin-top: 0.5rem;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

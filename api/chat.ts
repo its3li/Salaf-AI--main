@@ -82,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'openai-large',
+                model: 'kimi',
                 messages: finalMessages,
                 temperature: 0.7,
                 max_tokens: 5000,

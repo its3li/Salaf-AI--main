@@ -286,10 +286,13 @@ const App: React.FC = () => {
     setChats(updatedChatsAfterUser);
     saveChatsToLocalStorage(updatedChatsAfterUser);
 
+codex/fix-chat-input-and-response-issues-rypepo
+
     // Record usage immediately
     recordMessageUsage();
     setDailyMessageCount(getMessageUsageCount());
 
+ main
     const targetChatId = activeChatId;
     const controller = new AbortController();
     pendingRequestRef.current = { chatId: targetChatId, controller };
@@ -322,6 +325,9 @@ const App: React.FC = () => {
         saveChatsToLocalStorage(finalChats);
         return finalChats;
       });
+
+      recordMessageUsage();
+      setDailyMessageCount(getMessageUsageCount());
 
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
@@ -404,7 +410,7 @@ const App: React.FC = () => {
       {view === 'landing' ? (
         <LandingPage onStartChat={enterApp} onInstallClick={handleInstallClick} />
       ) : (
-        <div className="flex h-screen bg-transparent overflow-hidden">
+        <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.14)_0%,_rgba(0,0,0,0)_40%),radial-gradient(circle_at_bottom,_rgba(93,126,255,0.12)_0%,_rgba(0,0,0,0)_42%),#07080C]">
           <Sidebar
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
@@ -418,34 +424,35 @@ const App: React.FC = () => {
           />
 
           <div className="flex-1 flex flex-col h-full relative w-full transition-all duration-300">
+            <div className="pointer-events-none absolute inset-0 opacity-50 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100%_28px]" />
             <Header
               onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
               onHomeClick={() => setView('landing')}
             />
 
-            <main className="flex-1 overflow-y-auto p-4 custom-scrollbar relative">
-              <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
+            <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar relative">
+              <div className="max-w-5xl mx-auto w-full h-full flex flex-col">
                 {currentMessages.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-end select-none px-4 animate-in fade-in duration-500 pb-2">
+                  <div className="flex-1 flex flex-col items-center justify-end select-none px-4 animate-in fade-in duration-500 pb-4">
                     <img
                       src="https://i.postimg.cc/RhRmHpj2/1000000424.png"
                       alt="Salaf AI"
                       width="240"
                       height="240"
-                      className="w-48 md:w-60 h-auto mb-6 drop-shadow-[0_0_20px_rgba(212,175,55,0.2)] mt-auto"
+                      className="w-52 md:w-64 h-auto mb-6 drop-shadow-[0_0_28px_rgba(212,175,55,0.3)] mt-auto"
                     />
                     <h1 className="text-3xl md:text-4xl text-[#D4AF37] font-bold mb-3 text-center">Salaf AI - باحث السلف</h1>
-                    <h2 className="text-lg md:text-xl text-[#E0E0E0] font-medium mb-4 text-center">دليلك الموثوق للمعرفة الإسلامية الأصيلة</h2>
+                    <h2 className="text-lg md:text-xl text-[#E0E0E0] font-medium mb-4 text-center">نسخة جديدة بتجربة أكثر أناقة وسرعة ووضوحاً</h2>
                     <p className="text-gray-300 text-center max-w-2xl leading-relaxed font-light mb-8 text-sm md:text-base">
                       Salaf AI هو ذكاء اصطناعي مصمم للإجابة على أسئلتك في الفقه والعقيدة والسيرة وفق منهج السلف الصالح، مستمداً من القرآن والسنة الصحيحة.
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-3xl">
                       {["ما هو منهج السلف؟", "شرح معنى التوحيد", "حكم تارك الصلاة"].map((q) => (
                         <button
                           key={q}
                           onClick={() => setInputText(q)}
-                          className="px-4 py-3 bg-[#1E1E1E]/60 border border-[#333] hover:border-[#D4AF37]/50 rounded-xl text-[#E0E0E0] text-sm transition-all duration-300 hover:bg-[#D4AF37]/10 hover:shadow-lg hover:shadow-[#D4AF37]/5 active:scale-95"
+                          className="px-4 py-3 bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/60 rounded-2xl text-[#E0E0E0] text-sm transition-all duration-300 hover:bg-[#D4AF37]/10 hover:shadow-lg hover:shadow-[#D4AF37]/10 active:scale-95"
                         >
                           {q}
                         </button>
@@ -453,7 +460,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="pb-8">
+                  <div className="pb-10 space-y-3">
                     {currentMessages.map((msg) => (
                       <MessageBubble key={msg.id} message={msg} />
                     ))}
@@ -462,7 +469,7 @@ const App: React.FC = () => {
 
                 {loadingChatId === activeChatId && (
                   <div className="flex w-full mb-6 justify-end">
-                    <div className="bg-[#1E1E1E]/80 backdrop-blur border border-[#D4AF37]/30 rounded-2xl rounded-bl-none px-8 py-3 shadow-[0_0_20px_rgba(212,175,55,0.1)] animate-in fade-in slide-in-from-right-4">
+                    <div className="bg-[#141821]/85 backdrop-blur-xl border border-[#D4AF37]/30 rounded-2xl rounded-bl-none px-8 py-3 shadow-[0_0_25px_rgba(212,175,55,0.14)] animate-in fade-in slide-in-from-right-4">
                       <div className="flex items-center gap-3 h-6">
                         <span className="text-[#D4AF37] font-bold text-sm tracking-wide transition-all duration-500 animate-pulse">
                           {DHIKR_PHRASES[dhikrIndex]}

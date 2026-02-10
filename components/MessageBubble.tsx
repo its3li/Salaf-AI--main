@@ -96,10 +96,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   // Custom styling for markdown elements to match the theme
   const components = {
     p: ({children}: any) => <p className="mb-4 last:mb-0 leading-[1.8] whitespace-pre-wrap break-words">{processContent(children)}</p>,
-    h1: ({children}: any) => <h1 className={`text-2xl font-bold mb-4 mt-6 ${isUser ? 'text-black' : 'text-[#D4AF37]'}`}>{processContent(children)}</h1>,
-    h2: ({children}: any) => <h2 className={`text-xl font-bold mb-3 mt-5 ${isUser ? 'text-black' : 'text-[#D4AF37]'}`}>{processContent(children)}</h2>,
-    h3: ({children}: any) => <h3 className={`text-lg font-bold mb-2 mt-4 ${isUser ? 'text-black' : 'text-[#D4AF37]'}`}>{processContent(children)}</h3>,
-    strong: ({children}: any) => <strong className={`font-bold ${isUser ? 'text-black' : 'text-[#D4AF37]'}`}>{processContent(children)}</strong>,
+    h1: ({children}: any) => <h1 className={`text-2xl font-bold mb-4 mt-6 ${isUser ? 'text-[#0F1117]' : 'text-[#F2D16B]'}`}>{processContent(children)}</h1>,
+    h2: ({children}: any) => <h2 className={`text-xl font-bold mb-3 mt-5 ${isUser ? 'text-[#0F1117]' : 'text-[#F2D16B]'}`}>{processContent(children)}</h2>,
+    h3: ({children}: any) => <h3 className={`text-lg font-bold mb-2 mt-4 ${isUser ? 'text-[#0F1117]' : 'text-[#F2D16B]'}`}>{processContent(children)}</h3>,
+    strong: ({children}: any) => <strong className={`font-bold ${isUser ? 'text-[#0F1117]' : 'text-[#F2D16B]'}`}>{processContent(children)}</strong>,
     em: ({children}: any) => <em className="italic">{processContent(children)}</em>,
     ul: ({children}: any) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
     ol: ({children}: any) => <ol className="list-decimal list-inside mb-4 space-y-2">{children}</ol>,
@@ -160,14 +160,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
       if (inline) {
         return <code className={`px-1.5 py-0.5 rounded font-mono text-xs mx-1 ${
-          isUser ? 'bg-black/10 text-black' : 'bg-[#2c2c2c] text-[#D4AF37] border border-[#333]'
+          isUser ? 'bg-black/10 text-[#0F1117]' : 'bg-[#1A1F2B] text-[#F2D16B] border border-white/10'
         }`}>{processContent(children)}</code>;
       }
       
       return (
-        <div className="my-4 overflow-x-auto rounded-lg border border-[#333] max-w-full">
+        <div className="my-4 overflow-x-auto rounded-lg border border-white/10 max-w-full">
            <pre className={`p-4 font-mono text-xs whitespace-pre-wrap break-words ${
-             isUser ? 'bg-black/5 text-black' : 'bg-[#1E1E1E] text-gray-300'
+             isUser ? 'bg-black/5 text-[#0F1117]' : 'bg-[#111622] text-[#CFD4E0]'
            }`}>
              {processContent(children)}
            </pre>
@@ -176,8 +176,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     },
     // Table Elements
     table: ({children}: any) => (
-      <div className="overflow-x-auto my-4 rounded-lg border border-[#D4AF37]/30 max-w-full">
-        <table className={`min-w-full border-collapse table-fixed text-right ${isUser ? 'text-black' : 'text-[#E0E0E0]'}`}>
+      <div className="overflow-x-auto my-4 rounded-xl border border-white/10 bg-[#0D111A]/60 max-w-full">
+        <table className={`min-w-full border-collapse table-fixed text-right ${isUser ? 'text-[#0F1117]' : 'text-[#E8ECF5]'}`}>
           {children}
         </table>
       </div>
@@ -220,8 +220,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           className={`relative text-base overflow-hidden transition-all duration-300 group
           ${
             isUser
-              ? 'max-w-[85%] md:max-w-[75%] rounded-2xl px-6 py-4 shadow-[0_4px_15px_rgba(212,175,55,0.15)] bg-gradient-to-br from-[#D4AF37] to-[#C5A028] text-[#000000] rounded-br-none font-bold'
-              : 'w-full text-[#E0E0E0] font-light leading-[1.8] border border-[#333]/50 shadow-sm rounded-xl p-4 bg-[#121212]/30 backdrop-blur-sm'
+              ? 'max-w-[88%] md:max-w-[78%] rounded-2xl px-5 py-4 shadow-[0_10px_22px_rgba(212,175,55,0.22)] bg-gradient-to-br from-[#F3D77A] to-[#C79A2B] text-[#111318] rounded-br-none font-semibold border border-[#F3D77A]/60'
+              : 'w-full text-[#E8ECF5] font-light leading-[1.85] border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.2)] rounded-2xl p-5 bg-[#0E121B]/70 backdrop-blur-md'
           }
           ${message.isError ? 'border-red-500 border bg-red-900/20 text-red-200 rounded-lg px-6 py-4' : ''}
           `}
@@ -254,7 +254,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           )}
           
           <div className="flex items-center justify-end mt-2 gap-3">
-            <div className={`text-[10px] opacity-70 ${isUser ? 'text-[#000000]' : 'text-[#D4AF37]'}`}>
+            <div className={`text-[10px] opacity-70 ${isUser ? 'text-[#151922]' : 'text-[#F2D16B]'}`}>
               {toArabicNumerals(message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}
             </div>
 
@@ -264,7 +264,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 {sourcesList.length > 0 && (
                   <button
                     onClick={() => setShowSources(true)}
-                    className="flex items-center gap-1 px-2 py-1 rounded bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 transition-colors text-xs"
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#F2D16B] border border-[#D4AF37]/30 transition-colors text-xs"
                     title="عرض المصادر"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
@@ -275,7 +275,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 {/* Copy Button */}
                 <button
                   onClick={handleCopy}
-                  className="p-1.5 rounded-full hover:bg-[#ffffff]/10 text-[#D4AF37]"
+                  className="p-1.5 rounded-full hover:bg-white/10 text-[#F2D16B]"
                   title="نسخ النص"
                   aria-label="Copy text"
                 >
@@ -303,7 +303,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setShowSources(false)}
           />
-          <div className="relative w-full max-w-lg bg-[#1E1E1E] border border-[#D4AF37]/30 rounded-2xl shadow-2xl p-6 md:p-8 transform transition-all animate-in zoom-in-95">
+          <div className="relative w-full max-w-lg bg-[#0E121B] border border-[#D4AF37]/30 rounded-2xl shadow-2xl p-6 md:p-8 transform transition-all animate-in zoom-in-95">
             <button
               onClick={() => setShowSources(false)}
               className="absolute top-4 left-4 text-gray-400 hover:text-[#D4AF37] transition-colors"

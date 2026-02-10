@@ -1,4 +1,8 @@
+ codex/fix-chat-input-and-response-issues-rypepo
+import React, { useLayoutEffect, useRef, useState } from 'react';
+
 import React, { useRef, useState } from 'react';
+ main
 import { Attachment } from '../types';
 
 interface ChatInputProps {
@@ -8,9 +12,23 @@ interface ChatInputProps {
   setInput: (text: string) => void;
 }
 
+const MIN_TEXTAREA_HEIGHT = 44;
+const MAX_TEXTAREA_HEIGHT = 72;
+
 export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, setInput }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachment, setAttachment] = useState<Attachment | undefined>(undefined);
+ codex/fix-chat-input-and-response-issues-rypepo
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = `${MIN_TEXTAREA_HEIGHT}px`;
+    const nextHeight = Math.min(Math.max(textarea.scrollHeight, MIN_TEXTAREA_HEIGHT), MAX_TEXTAREA_HEIGHT);
+    textarea.style.height = `${nextHeight}px`;
+  }, [input]);
+ main
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -72,13 +90,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, 
           </div>
         )}
 
+ codex/fix-chat-input-and-response-issues-rypepo
+        <div className="relative flex items-end gap-2 bg-[#0F131B]/90 border border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.35)] rounded-[22px] p-2 transition-all duration-300 focus-within:border-[#D4AF37]/60 focus-within:shadow-[0_0_20px_rgba(212,175,55,0.18)]">
+
         <div className="relative flex items-end gap-2 bg-[#1E1E1E] border border-[#333] shadow-lg rounded-[24px] p-1.5 transition-all duration-300 focus-within:border-[#D4AF37]/50 focus-within:shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+main
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 text-gray-400 hover:text-[#D4AF37] hover:bg-[#333] shrink-0
-              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-            `}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 text-white/60 hover:text-[#D4AF37] hover:bg-white/10 shrink-0 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="إرفاق ملف"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
@@ -95,22 +115,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={attachment ? 'أضف تعليقاً...' : 'اسأل هنا وفق منهج السلف...'}
+ codex/fix-chat-input-and-response-issues-rypepo
+            className="w-full bg-transparent text-[#F1F2F4] px-2 py-2 resize-none focus:outline-none placeholder:text-white/40 text-base leading-6 overflow-y-auto [&::-webkit-scrollbar]:hidden"
+            style={{ minHeight: `${MIN_TEXTAREA_HEIGHT}px`, maxHeight: `${MAX_TEXTAREA_HEIGHT}px` }}
+            rows={1}
+
             className="w-full bg-transparent text-[#E0E0E0] px-2 py-2 resize-none focus:outline-none placeholder-gray-500 text-base leading-6 overflow-y-auto [&::-webkit-scrollbar]:hidden"
             style={{ minHeight: '64px', maxHeight: '64px' }}
             rows={2}
+ main
             disabled={isLoading}
           />
 
           <button
             onClick={() => handleSubmit()}
             disabled={(!input.trim() && !attachment) || isLoading}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shrink-0
-              ${
-                (!input.trim() && !attachment) || isLoading
-                  ? 'bg-[#333] cursor-not-allowed text-gray-500'
-                  : 'bg-[#D4AF37] hover:bg-[#C5A028] text-[#121212] shadow-lg shadow-[#D4AF37]/20'
-              }
-            `}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shrink-0 ${
+              (!input.trim() && !attachment) || isLoading
+                ? 'bg-white/10 cursor-not-allowed text-gray-500'
+                : 'bg-gradient-to-b from-[#D4AF37] to-[#C89D2F] hover:brightness-105 text-[#121212] shadow-lg shadow-[#D4AF37]/30'
+            }`}
+            title="إرسال"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-[#121212] border-t-transparent rounded-full animate-spin" />

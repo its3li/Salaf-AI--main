@@ -286,13 +286,13 @@ const App: React.FC = () => {
     setChats(updatedChatsAfterUser);
     saveChatsToLocalStorage(updatedChatsAfterUser);
 
-codex/fix-chat-input-and-response-issues-rypepo
+
 
     // Record usage immediately
     recordMessageUsage();
     setDailyMessageCount(getMessageUsageCount());
 
- main
+
     const targetChatId = activeChatId;
     const controller = new AbortController();
     pendingRequestRef.current = { chatId: targetChatId, controller };

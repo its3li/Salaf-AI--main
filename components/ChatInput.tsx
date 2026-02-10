@@ -1,8 +1,8 @@
- codex/fix-chat-input-and-response-issues-rypepo
+
 import React, { useLayoutEffect, useRef, useState } from 'react';
 
 import React, { useRef, useState } from 'react';
- main
+
 import { Attachment } from '../types';
 
 interface ChatInputProps {
@@ -28,8 +28,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, 
     const nextHeight = Math.min(Math.max(textarea.scrollHeight, MIN_TEXTAREA_HEIGHT), MAX_TEXTAREA_HEIGHT);
     textarea.style.height = `${nextHeight}px`;
   }, [input]);
- main
-
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if ((!input.trim() && !attachment) || isLoading) return;
@@ -90,12 +88,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, 
           </div>
         )}
 
- codex/fix-chat-input-and-response-issues-rypepo
+
         <div className="relative flex items-end gap-2 bg-[#0F131B]/90 border border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.35)] rounded-[22px] p-2 transition-all duration-300 focus-within:border-[#D4AF37]/60 focus-within:shadow-[0_0_20px_rgba(212,175,55,0.18)]">
 
         <div className="relative flex items-end gap-2 bg-[#1E1E1E] border border-[#333] shadow-lg rounded-[24px] p-1.5 transition-all duration-300 focus-within:border-[#D4AF37]/50 focus-within:shadow-[0_0_15px_rgba(212,175,55,0.1)]">
-main
-          <button
+     <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 text-white/60 hover:text-[#D4AF37] hover:bg-white/10 shrink-0 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -115,7 +112,8 @@ main
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={attachment ? 'أضف تعليقاً...' : 'اسأل هنا وفق منهج السلف...'}
- codex/fix-chat-input-and-response-issues-rypepo
+
+           
             className="w-full bg-transparent text-[#F1F2F4] px-2 py-2 resize-none focus:outline-none placeholder:text-white/40 text-base leading-6 overflow-y-auto [&::-webkit-scrollbar]:hidden"
             style={{ minHeight: `${MIN_TEXTAREA_HEIGHT}px`, maxHeight: `${MAX_TEXTAREA_HEIGHT}px` }}
             rows={1}
@@ -123,7 +121,8 @@ main
             className="w-full bg-transparent text-[#E0E0E0] px-2 py-2 resize-none focus:outline-none placeholder-gray-500 text-base leading-6 overflow-y-auto [&::-webkit-scrollbar]:hidden"
             style={{ minHeight: '64px', maxHeight: '64px' }}
             rows={2}
- main
+
+           
             disabled={isLoading}
           />
 

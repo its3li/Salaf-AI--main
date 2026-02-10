@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('landing');
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingChatId, setLoadingChatId] = useState<string | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [inputText, setInputText] = useState('');
@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const [dailyMessageCount, setDailyMessageCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const pendingRequestRef = useRef<{ chatId: string; controller: AbortController } | null>(null);
 
   // Helper to get current message usage count
   const getMessageUsageCount = () => {
@@ -92,7 +93,7 @@ const App: React.FC = () => {
   // Cycle Dhikr phrases when loading
   useEffect(() => {
     let interval: number;
-    if (isLoading) {
+    if (loadingChatId) {
       interval = window.setInterval(() => {
         setDhikrIndex((prev) => (prev + 1) % DHIKR_PHRASES.length);
       }, 2500);
@@ -100,7 +101,7 @@ const App: React.FC = () => {
       setDhikrIndex(0);
     }
     return () => clearInterval(interval);
-  }, [isLoading]);
+  }, [loadingChatId]);
 
   // Compute current messages based on activeChatId
   const currentMessages = useMemo(() => {
@@ -168,6 +169,23 @@ const App: React.FC = () => {
     localStorage.setItem('salaf_ai_msg_timestamps', JSON.stringify(timestamps));
   };
 
+
+
+  const cancelPendingRequest = (chatId?: string) => {
+    const pending = pendingRequestRef.current;
+    if (!pending) return;
+
+    if (!chatId || pending.chatId === chatId) {
+      pending.controller.abort();
+      pendingRequestRef.current = null;
+      setLoadingChatId((prev) => (!chatId || prev === chatId ? null : prev));
+    }
+  };
+
+  useEffect(() => {
+    return () => cancelPendingRequest();
+  }, []);
+
   const enterApp = () => {
     setView('chat');
     if (chats.length === 0) {
@@ -186,6 +204,10 @@ const App: React.FC = () => {
       }
     }
 
+    if (activeChatId) {
+      cancelPendingRequest(activeChatId);
+    }
+
     const newChatId = Date.now().toString();
     const newChat: ChatSession = {
       id: newChatId,
@@ -202,7 +224,7 @@ const App: React.FC = () => {
   };
 
   const handleSendMessage = async (text: string, attachment?: Attachment) => {
-    if (!activeChatId) return;
+    if (!activeChatId || loadingChatId) return;
 
     // Check Rate Limit
     const rateLimit = checkRateLimit();
@@ -268,13 +290,16 @@ const App: React.FC = () => {
     recordMessageUsage();
     setDailyMessageCount(getMessageUsageCount());
 
-    setIsLoading(true);
+    const targetChatId = activeChatId;
+    const controller = new AbortController();
+    pendingRequestRef.current = { chatId: targetChatId, controller };
+    setLoadingChatId(targetChatId);
 
-    const currentChatHistory = updatedChatsAfterUser.find(c => c.id === activeChatId)?.messages || [];
+    const currentChatHistory = updatedChatsAfterUser.find(c => c.id === targetChatId)?.messages || [];
 
     try {
       const minDelayPromise = new Promise<void>((resolve) => setTimeout(resolve, 1500));
-      const apiPromise = sendMessageToGemini(currentChatHistory, text, attachment);
+      const apiPromise = sendMessageToGemini(currentChatHistory, text, attachment, controller.signal);
       const [responseText] = await Promise.all([apiPromise, minDelayPromise]);
 
       const botMessage: Message = {
@@ -286,7 +311,7 @@ const App: React.FC = () => {
 
       setChats(prevChats => {
         const finalChats = prevChats.map(chat => {
-          if (chat.id === activeChatId) {
+          if (chat.id === targetChatId) {
             return {
               ...chat,
               messages: [...chat.messages, botMessage]
@@ -299,6 +324,10 @@ const App: React.FC = () => {
       });
 
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
+
       console.error("Error in chat flow:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -310,7 +339,7 @@ const App: React.FC = () => {
 
       setChats(prevChats => {
         const errorChats = prevChats.map(chat => {
-          if (chat.id === activeChatId) {
+          if (chat.id === targetChatId) {
             return {
               ...chat,
               messages: [...chat.messages, errorMessage]
@@ -323,7 +352,10 @@ const App: React.FC = () => {
       });
 
     } finally {
-      setIsLoading(false);
+      if (pendingRequestRef.current?.controller === controller) {
+        pendingRequestRef.current = null;
+        setLoadingChatId(null);
+      }
     }
   };
 
@@ -338,6 +370,8 @@ const App: React.FC = () => {
 
     const confirmDelete = window.confirm('هل أنت متأكد من حذف هذه المحادثة؟');
     if (!confirmDelete) return;
+
+    cancelPendingRequest(chatId);
 
     const remainingChats = chats.filter(c => c.id !== chatId);
 
@@ -426,7 +460,7 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                {isLoading && (
+                {loadingChatId === activeChatId && (
                   <div className="flex w-full mb-6 justify-end">
                     <div className="bg-[#1E1E1E]/80 backdrop-blur border border-[#D4AF37]/30 rounded-2xl rounded-bl-none px-8 py-3 shadow-[0_0_20px_rgba(212,175,55,0.1)] animate-in fade-in slide-in-from-right-4">
                       <div className="flex items-center gap-3 h-6">
@@ -448,7 +482,7 @@ const App: React.FC = () => {
 
             <ChatInput
               onSend={handleSendMessage}
-              isLoading={isLoading}
+              isLoading={loadingChatId !== null}
               input={inputText}
               setInput={setInputText}
             />

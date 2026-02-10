@@ -18,7 +18,7 @@ const MAX_TEXTAREA_HEIGHT = 72;
 export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, setInput }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachment, setAttachment] = useState<Attachment | undefined>(undefined);
- codex/fix-chat-input-and-response-issues-rypepo
+ 
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;

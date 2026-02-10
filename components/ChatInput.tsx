@@ -62,7 +62,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, 
 
   return (
     <div className="w-full bg-transparent px-4 pb-6 pt-2 md:px-6 md:pb-8 shrink-0 z-20">
-      <div className="max-w-4xl mx-auto flex flex-col gap-2">
+      <div className="max-w-3xl mx-auto flex flex-col gap-2">
         {attachment && (
           <div className="flex items-center gap-3 bg-[#1E1E1E] border border-[#333] rounded-xl p-2 pl-4 w-fit animate-in fade-in slide-in-from-bottom-2 shadow-lg mx-1 mb-1">
             <div className="relative w-10 h-10 bg-black/30 rounded-lg overflow-hidden flex items-center justify-center border border-[#333]">
@@ -87,26 +87,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, 
 
         <div className="relative flex items-end gap-2 bg-[#0F131B]/90 border border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.35)] rounded-[22px] p-2 transition-all duration-300 focus-within:border-[#D4AF37]/60 focus-within:shadow-[0_0_20px_rgba(212,175,55,0.18)]">
           <button
-            onClick={() => handleSubmit()}
-            disabled={(!input.trim() && !attachment) || isLoading}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shrink-0
-              ${
-                (!input.trim() && !attachment) || isLoading
-                  ? 'bg-white/10 cursor-not-allowed text-gray-500'
-                  : 'bg-gradient-to-b from-[#D4AF37] to-[#C89D2F] hover:brightness-105 text-[#121212] shadow-lg shadow-[#D4AF37]/30'
-              }
-            `}
-            title="إرسال"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 text-white/60 hover:text-[#D4AF37] hover:bg-white/10 shrink-0 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title="إرفاق ملف"
           >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-[#121212] border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 2 11 13" />
-                <path d="m22 2-7 20-4-9-9-4Z" />
-              </svg>
-            )}
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
           </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            className="hidden"
+            accept="image/*,application/pdf"
+          />
 
           <textarea
             ref={textareaRef}
@@ -120,22 +114,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading, input, 
           />
 
           <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 text-white/60 hover:text-[#D4AF37] hover:bg-white/10 shrink-0
-              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-            `}
-            title="إرفاق ملف"
+            onClick={() => handleSubmit()}
+            disabled={(!input.trim() && !attachment) || isLoading}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shrink-0 ${
+              (!input.trim() && !attachment) || isLoading
+                ? 'bg-white/10 cursor-not-allowed text-gray-500'
+                : 'bg-gradient-to-b from-[#D4AF37] to-[#C89D2F] hover:brightness-105 text-[#121212] shadow-lg shadow-[#D4AF37]/30'
+            }`}
+            title="إرسال"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-[#121212] border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="19" x2="12" y2="5"></line>
+                <polyline points="5 12 12 5 19 12"></polyline>
+              </svg>
+            )}
           </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            className="hidden"
-            accept="image/*,application/pdf"
-          />
         </div>
       </div>
     </div>

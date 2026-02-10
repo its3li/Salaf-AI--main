@@ -1,4 +1,3 @@
-
 import { Message, Attachment } from "../types";
 
 const compressImage = (base64Str: string, maxWidth = 1024, quality = 0.7): Promise<string> => {
@@ -20,27 +19,25 @@ const compressImage = (base64Str: string, maxWidth = 1024, quality = 0.7): Promi
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
 
-            // Compress to JPEG
             resolve(canvas.toDataURL('image/jpeg', quality));
         };
     });
 };
 
-const uploadImageToDiscord = async (attachment: Attachment): Promise<string> => {
+const uploadImageToDiscord = async (attachment: Attachment, signal?: AbortSignal): Promise<string> => {
     try {
-        // Compress image before uploading
         const compressedData = await compressImage(attachment.data);
 
-        // Send to our backend API instead of direct Discord URL
         const response = await fetch('/api/upload', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                image: compressedData, // Send compressed image
-                name: attachment.name.replace(/\.[^/.]+$/, ".jpg") // Change extension to jpg
-            })
+                image: compressedData,
+                name: attachment.name.replace(/\.[^/.]+$/, ".jpg")
+            }),
+            signal
         });
 
         if (!response.ok) {
@@ -56,10 +53,7 @@ const uploadImageToDiscord = async (attachment: Attachment): Promise<string> => 
     }
 };
 
-/**
- * Helper function to call Backend API
- */
-const callBackendApi = async (messages: any[]) => {
+const callBackendApi = async (messages: any[], signal?: AbortSignal) => {
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
@@ -68,7 +62,8 @@ const callBackendApi = async (messages: any[]) => {
             },
             body: JSON.stringify({
                 messages: messages
-            })
+            }),
+            signal
         });
 
         if (!response.ok) {
@@ -84,11 +79,14 @@ const callBackendApi = async (messages: any[]) => {
     }
 };
 
-export const sendMessageToGemini = async (history: Message[], text: string, attachment?: Attachment): Promise<string> => {
-    // Start with empty array, system instruction is now added on the server
+export const sendMessageToGemini = async (
+    history: Message[],
+    text: string,
+    attachment?: Attachment,
+    signal?: AbortSignal
+): Promise<string> => {
     const apiMessages = [];
 
-    // Add recent history (last 10 messages) to maintain context
     const recentHistory = history.slice(-10);
     for (const msg of recentHistory) {
         if (!msg.isError) {
@@ -99,23 +97,20 @@ export const sendMessageToGemini = async (history: Message[], text: string, atta
         }
     }
 
-    // Prepare current user message
     let userContent: any = text;
     if (attachment) {
         try {
-            const imageUrl = await uploadImageToDiscord(attachment);
-            // OpenAI-compatible vision format
+            const imageUrl = await uploadImageToDiscord(attachment, signal);
             userContent = [
                 { type: "text", text: text },
                 { type: "image_url", image_url: { url: imageUrl } }
             ];
         } catch (e) {
             console.error("Failed to upload attachment", e);
-            // Fallback to text only if upload fails
         }
     }
 
     apiMessages.push({ role: 'user', content: userContent });
 
-    return await callBackendApi(apiMessages);
+    return await callBackendApi(apiMessages, signal);
 };

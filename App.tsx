@@ -403,6 +403,31 @@ const App: React.FC = () => {
     }
   };
 
+  const handleRenameChat = (e: React.MouseEvent, chatId: string) => {
+    if (e) e.stopPropagation();
+
+    const chatToRename = chats.find(chat => chat.id === chatId);
+    if (!chatToRename) return;
+
+    const nextTitle = window.prompt('اكتب اسمًا جديدًا للمحادثة:', chatToRename.title);
+    if (nextTitle === null) return;
+
+    const trimmedTitle = nextTitle.trim();
+    if (!trimmedTitle) {
+      window.alert('لا يمكن أن يكون اسم المحادثة فارغًا.');
+      return;
+    }
+
+    const updatedChats = chats.map(chat =>
+      chat.id === chatId
+        ? { ...chat, title: trimmedTitle }
+        : chat
+    );
+
+    setChats(updatedChats);
+    saveChatsToLocalStorage(updatedChats);
+  };
+
   return (
     <>
       <Analytics />
@@ -419,6 +444,7 @@ const App: React.FC = () => {
             activeChatId={activeChatId}
             onSelectChat={handleSelectChat}
             onDeleteChat={handleDeleteChat}
+            onRenameChat={handleRenameChat}
             messageCount={dailyMessageCount}
             maxMessages={MAX_MESSAGES_24H}
           />

@@ -9,6 +9,7 @@ interface SidebarProps {
   activeChatId: string | null;
   onSelectChat: (id: string) => void;
   onDeleteChat: (e: React.MouseEvent, id: string) => void;
+  onRenameChat: (e: React.MouseEvent, id: string) => void;
   messageCount: number;
   maxMessages: number;
 }
@@ -21,6 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeChatId,
   onSelectChat,
   onDeleteChat,
+  onRenameChat,
   messageCount,
   maxMessages
 }) => {
@@ -85,23 +87,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-80"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     <span className="truncate flex-1 text-sm font-medium">{chat.title}</span>
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onDeleteChat(e, chat.id);
-                      }}
-                      className={`p-1.5 rounded-lg transition-all duration-200 shrink-0 ${
-                        isActive
-                          ? 'text-[#1F1A0D] bg-[#D4AF37]/80 hover:bg-[#D4AF37]'
-                          : 'text-red-300 hover:text-red-200 hover:bg-red-500/20 opacity-0 group-hover:opacity-100'
-                      }`}
-                      title="حذف المحادثة"
-                      aria-label="Delete chat"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onRenameChat(e, chat.id);
+                        }}
+                        className={`p-1.5 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? 'text-[#1F1A0D] bg-[#F0DFA3]/80 hover:bg-[#F0DFA3]'
+                            : 'text-[#F2D16B] hover:text-[#F4D983] hover:bg-[#D4AF37]/15'
+                        }`}
+                        title="إعادة تسمية المحادثة"
+                        aria-label="Rename chat"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDeleteChat(e, chat.id);
+                        }}
+                        className={`p-1.5 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? 'text-[#1F1A0D] bg-[#D4AF37]/80 hover:bg-[#D4AF37]'
+                            : 'text-red-300 hover:text-red-200 hover:bg-red-500/20'
+                        }`}
+                        title="حذف المحادثة"
+                        aria-label="Delete chat"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      </button>
+                    </div>
                   </div>
                 );
               })

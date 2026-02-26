@@ -56,6 +56,38 @@ For any complex jurisprudential question or matters requiring a personal fatwa, 
 * **Final Warning:** Do not mention you are Gemini in any form. Only mention you are a model trained on Islamic texts.
 `;
 
+type ChatMessage = {
+    role: string;
+    content: any;
+};
+
+const MAX_TOKENS_PER_REQUEST = 3500;
+const MAX_CONTINUATIONS = 3;
+
+const callPollinations = async (messages: ChatMessage[], apiKey: string) => {
+    const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: 'kimk',
+            messages,
+            temperature: 0.7,
+            stream: false,
+            max_tokens: MAX_TOKENS_PER_REQUEST
+        })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Pollinations API Error ${response.status}: ${errorText}`);
+    }
+
+    return response.json();
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -70,34 +102,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Server configuration error' });
         }
 
-        // Prepend system instruction
-        const finalMessages = [
+        const conversationMessages: ChatMessage[] = [
             { role: 'system', content: SYSTEM_INSTRUCTION },
-            ...messages
+            ...(messages || [])
         ];
 
-        const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'kimk',
-                messages: finalMessages,
-                temperature: 0.7,
-                stream: true,
-                max_tokens: 5120
-            })
-        });
+        let combinedContent = '';
+        let responseData: any = null;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            return res.status(response.status).json({ error: errorText });
+        for (let i = 0; i <= MAX_CONTINUATIONS; i++) {
+            responseData = await callPollinations(conversationMessages, apiKey);
+
+            const choice = responseData?.choices?.[0];
+            const chunkText = choice?.message?.content || '';
+            const finishReason = choice?.finish_reason;
+
+            combinedContent += chunkText;
+
+            if (finishReason !== 'length') {
+                break;
+            }
+
+            conversationMessages.push({ role: 'assistant', content: chunkText });
+            conversationMessages.push({
+                role: 'user',
+                content: 'تابع من حيث توقفت مباشرةً دون إعادة ما سبق.'
+            });
         }
 
-        const data = await response.json();
-        return res.status(200).json(data);
+        if (!responseData) {
+            return res.status(500).json({ error: 'Empty response from upstream API' });
+        }
+
+        responseData.choices[0].message.content = combinedContent;
+        responseData.choices[0].finish_reason = 'stop';
+
+        return res.status(200).json(responseData);
 
     } catch (error: any) {
         console.error('API Error:', error);

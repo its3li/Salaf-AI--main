@@ -85,7 +85,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 model: 'kimi',
                 messages: finalMessages,
                 temperature: 0.7,
-                max_tokens: 5000,
+                stream:true,
+                max_tokens: 5000
             })
         });
 

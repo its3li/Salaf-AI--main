@@ -86,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 model: 'kimk',
                 messages: finalMessages,
                 temperature: 0.7,
-                stream: true,
+                stream: false,
                 max_tokens: 5120
             })
         });

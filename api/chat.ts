@@ -86,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 messages: finalMessages,
                 temperature: 0.7,
                 stream: false,
-                max_tokens: 5000
+                max_tokens: 4096
             })
         });
 

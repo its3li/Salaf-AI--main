@@ -83,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'kimk',
+                model: 'kimi',
                 messages: finalMessages,
                 temperature: 0.7,
                 stream: true,

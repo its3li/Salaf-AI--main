@@ -53,6 +53,28 @@ const uploadImageToDiscord = async (attachment: Attachment, signal?: AbortSignal
     }
 };
 
+const extractStreamText = (payload: any): string => {
+    const choice = payload?.choices?.[0];
+
+    if (!choice) return "";
+
+    if (typeof choice?.delta?.content === 'string') {
+        return choice.delta.content;
+    }
+
+    if (typeof choice?.message?.content === 'string') {
+        return choice.message.content;
+    }
+
+    if (Array.isArray(choice?.delta?.content)) {
+        return choice.delta.content
+            .map((part: any) => (typeof part?.text === 'string' ? part.text : ''))
+            .join('');
+    }
+
+    return "";
+};
+
 const callBackendApi = async (messages: any[], signal?: AbortSignal) => {
     try {
         const response = await fetch('/api/chat', {
@@ -71,8 +93,53 @@ const callBackendApi = async (messages: any[], signal?: AbortSignal) => {
             throw new Error(`API Error ${response.status}: ${errorText}`);
         }
 
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content || "";
+        if (!response.body) {
+            throw new Error('Streaming response body is missing');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        let finalText = '';
+        let buffer = '';
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line.startsWith('data:')) continue;
+
+                const dataPart = line.slice(5).trim();
+                if (!dataPart || dataPart === '[DONE]') continue;
+
+                try {
+                    const payload = JSON.parse(dataPart);
+                    finalText += extractStreamText(payload);
+                } catch {
+                    // Ignore malformed chunks and continue parsing the stream.
+                }
+            }
+        }
+
+        if (buffer.trim().startsWith('data:')) {
+            const dataPart = buffer.trim().slice(5).trim();
+            if (dataPart && dataPart !== '[DONE]') {
+                try {
+                    const payload = JSON.parse(dataPart);
+                    finalText += extractStreamText(payload);
+                } catch {
+                    // Ignore trailing malformed chunk.
+                }
+            }
+        }
+
+        return finalText;
     } catch (error) {
         console.error("Backend API Error:", error);
         throw error;

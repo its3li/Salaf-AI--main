@@ -96,8 +96,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(response.status).json({ error: errorText });
         }
 
-        const data = await response.json();
-        return res.status(200).json(data);
+        res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-transform');
+        res.setHeader('Connection', 'keep-alive');
+
+        if (!response.body) {
+            throw new Error('No response body from upstream stream');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            res.write(decoder.decode(value, { stream: true }));
+        }
+
+        res.end();
+        return;
 
     } catch (error: any) {
         console.error('API Error:', error);
